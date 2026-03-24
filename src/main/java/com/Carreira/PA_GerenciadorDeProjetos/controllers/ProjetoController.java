@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
 @RestController
 @RequestMapping(path="/projetos")
 public class ProjetoController {
@@ -17,29 +20,50 @@ public class ProjetoController {
     private ProjetoService projetoService;
 
     @GetMapping
-    public List<ProjetoModel> findAll(){
-        return projetoService.findAll();
+    public ResponseEntity<List<ProjetoModel>> findAllProjeto(){
+        return ResponseEntity.ok(projetoService.findAll());
     }
 
     @PostMapping
-    public ProjetoModel criarProjeto(@RequestBody ProjetoModel projetoModel){
-        return projetoService.criar(projetoModel);
+    public ResponseEntity<ProjetoModel> criarProjeto(@RequestBody ProjetoModel projetoModel){
+        ProjetoModel novo = projetoService.criar(projetoModel);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novo);
     }
 
     @GetMapping("/{id}")
-    public Optional<ProjetoModel> bucarProjeto(@PathVariable Long id){
-        return projetoService.buscarPorId(id);
+    public ResponseEntity<ProjetoModel> buscarProjeto(@PathVariable Long id){
+        Optional<ProjetoModel> projeto = projetoService.buscarPorId(id);
+
+        if (projeto.isPresent()) {
+            return ResponseEntity.ok(projeto.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
     @PutMapping("/{id}")
-    public ProjetoModel atualizarCProjeto(@PathVariable Long id, @RequestBody ProjetoModel projetoModel){
-        return projetoService.atualizar(id, projetoModel);
+    public ResponseEntity<ProjetoModel> atualizarProjeto(@PathVariable Long id,
+                                                         @RequestBody ProjetoModel projetoModel){
+        Optional<ProjetoModel> existente = projetoService.buscarPorId(id);
+
+        if (existente.isPresent()) {
+            ProjetoModel atualizado = projetoService.atualizar(id, projetoModel);
+            return ResponseEntity.ok(atualizado);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
     @DeleteMapping("/{id}")
-    public void deletarProjeto(@PathVariable Long id){
-        projetoService.deletar(id);
-    }
+    public ResponseEntity<Void> deletarProjeto(@PathVariable Long id){
+        Optional<ProjetoModel> existente = projetoService.buscarPorId(id);
 
+        if (existente.isPresent()) {
+            projetoService.deletar(id);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
 }
 
